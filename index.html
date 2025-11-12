@@ -1,356 +1,204 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>IoT Demo Dashboard</title>
-
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <style>
-    :root{
-      --bg:#f4f7fb; --card:#ffffff; --muted:#6b7280; --accent:#2563eb; --accent-2:#f97316;
-      --success:#16a34a; --danger:#ef4444; --glass: rgba(255,255,255,0.6);
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:Inter,system-ui,Segoe UI,Roboto,Arial;
-      background:linear-gradient(180deg,#eef3fb,#f8fafc);
-      color:#0f172a;
-      padding:28px;
-      display:flex;
-      justify-content:center;
-    }
-
-    .wrap{
-      width:1100px;
-      display:grid;
-      grid-template-columns: 360px 1fr;
-      gap:20px;
-    }
-
-    /* left column */
-    .panel{
-      background:var(--card);
-      border-radius:12px;
-      padding:18px;
-      box-shadow:0 8px 30px rgba(15,23,42,0.06);
-    }
-
-    .device {
-      display:flex;
-      gap:14px;
-      align-items:center;
-    }
-    .device-avatar{
-      width:64px;height:64px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#60a5fa);
-      display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:20px;
-    }
-    .device-info h3{margin:0;font-size:18px}
-    .device-info p{margin:4px 0 0 0;color:var(--muted);font-size:14px}
-
-    .big-value{font-size:48px;font-weight:700;color:#111;margin-top:6px}
-    .meta{color:var(--muted);font-size:13px;margin-top:6px}
-    .controls{display:flex;gap:8px;margin-top:12px}
-    .btn{padding:8px 12px;border-radius:8px;border:none;cursor:pointer;background:#fff;border:1px solid #e6eef9}
-    .btn.primary{background:var(--accent);color:white;border-color:var(--accent)}
-    .btn.warn{background:var(--accent-2);color:white;border-color:var(--accent-2)}
-    .btn.ghost{background:transparent}
-    .status{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:600;color:white}
-
-    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
-    .small-card{background:linear-gradient(180deg,#fff,#fbfdff);padding:12px;border-radius:10px;box-shadow:0 6px 18px rgba(15,23,42,0.03)}
-    .small-card .label{color:var(--muted);font-size:13px}
-    .small-card .val{font-weight:700;font-size:20px;margin-top:6px}
-
-    /* right column */
-    .top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-    .title{font-size:20px;font-weight:700}
-    .subtitle{color:var(--muted);font-size:13px}
-
-    .chart-card{background:var(--card);padding:18px;border-radius:12px;box-shadow:0 8px 30px rgba(15,23,42,0.06)}
-    canvas{width:100% !important;height:320px !important}
-
-    table{width:100%;border-collapse:collapse;margin-top:12px}
-    th,td{padding:8px 10px;text-align:left;font-size:13px;border-bottom:1px solid #f1f5f9}
-    th{color:var(--muted);font-weight:600}
-
-    .footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px;color:var(--muted);font-size:13px}
-    .chip{padding:6px 10px;border-radius:999px;background:#eef2ff;color:#3730a3;font-weight:700;font-size:13px}
-
-    @media(max-width:1100px){
-      .wrap{width:100%;grid-template-columns:1fr; padding:14px}
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>IoT Demo Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f6f8fb;
+    color: #222;
+  }
+  .container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 30px;
+    gap: 20px;
+  }
+  .card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    padding: 20px;
+    width: 380px;
+  }
+  .device-name {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .icon {
+    background: #007bff;
+    color: white;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 18px;
+  }
+  .value {
+    font-size: 48px;
+    font-weight: 600;
+    color: #ff6b6b;
+  }
+  .humidity {
+    font-size: 22px;
+    color: #007bff;
+  }
+  .meta {
+    font-size: 13px;
+    color: #666;
+  }
+  .controls {
+    margin-top: 12px;
+    display: flex;
+    gap: 10px;
+  }
+  button {
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  button.primary { background: #007bff; color: white; }
+  button.warn { background: #ff6b6b; color: white; }
+  button.gray { background: #ddd; }
+  .chart-card {
+    width: 640px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    padding: 20px;
+  }
+  .status {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #555;
+  }
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <!-- LEFT -->
-    <div>
-      <div class="panel">
-        <div class="device">
-          <div class="device-avatar">IoT</div>
-          <div class="device-info">
-            <h3>Demo Device • Living Room</h3>
-            <p>Device ID: demo-123 • Connected: <span id="conn" style="font-weight:700;color:var(--success)">Yes</span></p>
-          </div>
-        </div>
 
-        <div style="margin-top:18px">
-          <div class="big-value" id="mainTemp">-- °C</div>
-          <div class="meta">Humidity: <span id="mainHum">-- %</span> • Last update <span id="lastUpdate">—</span></div>
-
-          <div class="controls">
-            <button id="btnToggle" class="btn primary">Stop Data</button>
-            <button id="btnClear" class="btn">Clear</button>
-            <button id="btnSend" class="btn warn">Send Command</button>
-            <div style="margin-left:auto" class="chip" id="modeChip">Mode: Simulated</div>
-          </div>
-        </div>
-
-        <div class="grid-2">
-          <div class="small-card">
-            <div class="label">Average (1 min)</div>
-            <div class="val" id="avgTemp">— °C</div>
-          </div>
-          <div class="small-card">
-            <div class="label">Min / Max (1 min)</div>
-            <div class="val" id="minMax">— / —</div>
-          </div>
-        </div>
-
-        <div style="margin-top:14px">
-          <div class="label" style="color:var(--muted);font-size:13px">Recent Commands</div>
-          <div id="commands" style="margin-top:8px;color:var(--muted);font-size:13px">No commands yet.</div>
-        </div>
-      </div>
-
-      <div class="panel" style="margin-top:14px">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div style="font-weight:700">Readings (latest)</div>
-          <div style="color:var(--muted);font-size:13px">Streaming Demo</div>
-        </div>
-
-        <table id="tbl">
-          <thead><tr><th>Time</th><th>Temp °C</th><th>Humidity %</th></tr></thead>
-          <tbody id="tbody"></tbody>
-        </table>
+<div class="container">
+  <div class="card">
+    <div class="device-name">
+      <div class="icon">IoT</div>
+      <div>
+        <div><strong>Demo Device • Living Room</strong></div>
+        <div class="meta">Device ID: demo-123 • Connected: <span style="color:green">Yes</span></div>
       </div>
     </div>
+    <div class="value" id="temp">-- °C</div>
+    <div class="humidity" id="hum">-- %</div>
+    <div class="meta">Last update: <span id="time">--</span></div>
 
-    <!-- RIGHT -->
-    <div>
-      <div class="top-bar">
-        <div>
-          <div class="title">IoT Demo Dashboard</div>
-          <div class="subtitle">Live chart of temperature and humidity — simulated data for demo</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:13px;color:var(--muted)">Demo • No real device connected</div>
-        </div>
-      </div>
-
-      <div class="chart-card">
-        <canvas id="chartMain"></canvas>
-
-        <div class="footer">
-          <div>Showing last <strong id="pointsCount">30</strong> seconds</div>
-          <div>
-            <button id="btnMode" class="btn ghost">Switch to MQTT (commented)</button>
-          </div>
-        </div>
-      </div>
+    <div class="controls">
+      <button class="primary" id="start">Start Data</button>
+      <button class="gray" id="clear">Clear</button>
+      <button class="warn" id="cmd">Send Command</button>
     </div>
+
+    <div class="status" id="status">Mode: <b>Simulated</b></div>
   </div>
 
+  <div class="chart-card">
+    <h3>Live Data Chart</h3>
+    <canvas id="chart"></canvas>
+  </div>
+</div>
+
 <script>
-  // ========== CONFIG ==========
-  const MAX_POINTS = 30;           // how many points on chart
-  let running = true;
-  const readings = [];            // {t: Date, temp, hum}
+const ctx = document.getElementById("chart").getContext("2d");
+const data = {
+  labels: [],
+  datasets: [
+    { label: "Temperature °C", data: [], borderColor: "#ff6b6b", fill: false, tension: 0.3 },
+    { label: "Humidity %", data: [], borderColor: "#007bff", fill: false, tension: 0.3 }
+  ]
+};
+const chart = new Chart(ctx, {
+  type: "line",
+  data,
+  options: {
+    responsive: true,
+    animation: false,
+    scales: { y: { beginAtZero: false } },
+  },
+});
 
-  // ========== CHART SETUP (Chart.js) ==========
-  const ctx = document.getElementById('chartMain').getContext('2d');
-  const chartData = {
-    labels: [], datasets: [
-      { label:'Temperature °C', data:[], borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,0.08)', yAxisID:'y'},
-      { label:'Humidity %', data:[], borderColor:'#0ea5a4', backgroundColor:'rgba(14,165,164,0.06)', yAxisID:'y2' }
-    ]
-  };
-  const chart = new Chart(ctx, {
-    type:'line',
-    data:chartData,
-    options:{
-      animation:false,
-      responsive:true,
-      interaction:{mode:'index',intersect:false},
-      scales:{
-        x:{display:true},
-        y:{position:'left',title:{display:true,text:'Temp °C'}},
-        y2:{position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'Humidity %'}}
-      },
-      plugins:{legend:{display:true,position:'top'}}
-    }
-  });
+let timer = null;
+let running = false;
+const tempEl = document.getElementById("temp");
+const humEl = document.getElementById("hum");
+const timeEl = document.getElementById("time");
 
-  // ======= DOM refs =======
-  const mainTemp = document.getElementById('mainTemp');
-  const mainHum = document.getElementById('mainHum');
-  const lastUpdate = document.getElementById('lastUpdate');
-  const tbody = document.getElementById('tbody');
-  const avgTempEl = document.getElementById('avgTemp');
-  const minMaxEl = document.getElementById('minMax');
-  const btnToggle = document.getElementById('btnToggle');
-  const btnClear = document.getElementById('btnClear');
-  const btnSend = document.getElementById('btnSend');
-  const commandsDiv = document.getElementById('commands');
-  const modeChip = document.getElementById('modeChip');
-  const connEl = document.getElementById('conn');
-  const pointsCount = document.getElementById('pointsCount');
-  const btnMode = document.getElementById('btnMode');
+function randomValue(base, range) {
+  return (base + (Math.random() * range - range / 2)).toFixed(1);
+}
 
-  pointsCount.textContent = MAX_POINTS;
-
-  // ======= SIMULATOR =========
-  function genReading(prev){
-    // base around 22-26 for temp, 40-55 for humidity
-    const tBase = prev ? prev.temp : (22 + Math.random()*4);
-    const hBase = prev ? prev.hum : (45 + Math.random()*10);
-    const temp = Math.round((tBase + (Math.random()-0.5)*1.6)*10)/10;
-    const hum = Math.round((hBase + (Math.random()-0.5)*2.4)*10)/10;
-    return { t: new Date(), temp, hum };
+function addReading() {
+  const now = new Date();
+  const label = now.toLocaleTimeString();
+  const t = parseFloat(randomValue(25, 3));
+  const h = parseFloat(randomValue(50, 8));
+  if (data.labels.length >= 30) {
+    data.labels.shift();
+    data.datasets[0].data.shift();
+    data.datasets[1].data.shift();
   }
+  data.labels.push(label);
+  data.datasets[0].data.push(t);
+  data.datasets[1].data.push(h);
+  chart.update();
+  tempEl.textContent = `${t} °C`;
+  humEl.textContent = `${h} %`;
+  timeEl.textContent = label;
+}
 
-  function push(r){
-    // keep only MAX_POINTS
-    if (readings.length >= MAX_POINTS) readings.shift();
-    readings.push(r);
-    updateUI();
+function startSimulation() {
+  if (running) return;
+  running = true;
+  timer = setInterval(addReading, 1000);
+}
+
+function stopSimulation() {
+  running = false;
+  clearInterval(timer);
+}
+
+document.getElementById("start").addEventListener("click", () => {
+  if (running) {
+    stopSimulation();
+    document.getElementById("start").textContent = "Start Data";
+  } else {
+    startSimulation();
+    document.getElementById("start").textContent = "Stop Data";
   }
+});
 
-  // update DOM and chart from readings
-  function updateUI(){
-    // last reading
-    const last = readings[readings.length-1];
-    if (last){
-      mainTemp.textContent = last.temp + ' °C';
-      mainHum.textContent = last.hum + ' %';
-      lastUpdate.textContent = last.t.toLocaleTimeString();
-    } else {
-      mainTemp.textContent = '-- °C';
-      mainHum.textContent = '-- %';
-      lastUpdate.textContent = '—';
-    }
+document.getElementById("clear").addEventListener("click", () => {
+  data.labels = [];
+  data.datasets[0].data = [];
+  data.datasets[1].data = [];
+  chart.update();
+  tempEl.textContent = "-- °C";
+  humEl.textContent = "-- %";
+  timeEl.textContent = "--";
+});
 
-    // table
-    tbody.innerHTML = readings.slice().reverse().map(r=>{
-      return `<tr><td>${r.t.toLocaleTimeString()}</td><td>${r.temp}</td><td>${r.hum}</td></tr>`;
-    }).join('');
+document.getElementById("cmd").addEventListener("click", () => {
+  tempEl.textContent = "Sending...";
+  setTimeout(() => tempEl.textContent = "-- °C", 800);
+});
 
-    // averages
-    if (readings.length){
-      const temps = readings.map(x=>x.temp);
-      const avg = (temps.reduce((a,b)=>a+b,0)/temps.length).toFixed(1);
-      const min = Math.min(...temps);
-      const max = Math.max(...temps);
-      avgTempEl.textContent = avg + ' °C';
-      minMaxEl.textContent = min + ' / ' + max;
-    } else {
-      avgTempEl.textContent = '— °C';
-      minMaxEl.textContent = '— / —';
-    }
-
-    // chart
-    chart.data.labels = readings.map(r=>r.t.toLocaleTimeString());
-    chart.data.datasets[0].data = readings.map(r=>r.temp);
-    chart.data.datasets[1].data = readings.map(r=>r.hum);
-    chart.update();
-  }
-
-  // ======= GENERATOR LOOP =======
-  let loopHandle = null;
-  function startLoop(){
-    loopHandle = setInterval(()=>{
-      const prev = readings.length ? readings[readings.length-1] : null;
-      const r = genReading(prev);
-      push(r);
-    }, 1000);
-    connEl.textContent = 'Yes';
-    connEl.style.color = 'var(--success)';
-    modeChip.textContent = 'Mode: Simulated';
-    btnToggle.textContent = 'Stop Data';
-    btnToggle.classList.add('primary');
-    running = true;
-  }
-  function stopLoop(){
-    clearInterval(loopHandle);
-    loopHandle = null;
-    connEl.textContent = 'No';
-    connEl.style.color = 'var(--danger)';
-    btnToggle.textContent = 'Start Data';
-    btnToggle.classList.remove('primary');
-    running = false;
-  }
-
-  // start with a few seeded points
-  for (let i=0;i<8;i++){
-    const prev = readings.length ? readings[readings.length-1] : null;
-    push(genReading(prev));
-  }
-  startLoop();
-
-  // ======= controls =======
-  btnToggle.addEventListener('click',()=>{
-    if (running) stopLoop(); else startLoop();
-  });
-  btnClear.addEventListener('click',()=>{
-    readings.length = 0;
-    updateUI();
-    commandsDiv.innerHTML = 'No commands yet.';
-  });
-  btnSend.addEventListener('click',()=>{
-    const now = new Date();
-    const txt = `Command: toggle-light @ ${now.toLocaleTimeString()}`;
-    const prev = commandsDiv.innerHTML === 'No commands yet.' ? '' : commandsDiv.innerHTML + '<br>';
-    commandsDiv.innerHTML = prev + txt;
-    // Simulate immediate device reaction: push a small temp shift
-    push({ t: new Date(), temp: Math.round((readings[readings.length-1].temp + (Math.random()-0.5)*2)*10)/10, hum: readings[readings.length-1].hum });
-  });
-
-  // ======= MODE SWITCH (demo -> real MQTT placeholder) =======
-  btnMode.addEventListener('click',()=>{
-    alert('Switching to MQTT requires editing the page and providing broker credentials. A commented example is in the HTML source.');
-  });
-
-  // ========== MQTT EXAMPLE (commented) ==========
-  /* 
-  If you want to connect to a broker that supports WebSockets (wss), uncomment and configure below.
-  1) Add MQTT library: <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
-  2) Use the code below (replace URL, username, password, topic):
-  
-  // Example:
-  const mqttClient = mqtt.connect('wss://test.mosquitto.org:8081'); // or 'wss://io.adafruit.com:443'
-  mqttClient.on('connect', ()=> {
-    console.log('mqtt connected');
-    // subscribe to your feed
-    mqttClient.subscribe('youruser/feeds/temperature');
-    mqttClient.subscribe('youruser/feeds/humidity');
-  });
-  mqttClient.on('message', (topic, message)=>{
-    // parse message (e.g. numeric or JSON)
-    const payload = message.toString();
-    // parse accordingly and push reading
-    push({ t:new Date(), temp: parseFloat(payload), hum: parseFloat(payload2) });
-  });
-
-  // To publish command to a device:
-  mqttClient.publish('youruser/feeds/commands', 'toggle-light');
-  */
-
-  // Optional: cleanups on unload
-  window.addEventListener('beforeunload', ()=> { stopLoop(); });
+startSimulation();
 </script>
 </body>
 </html>

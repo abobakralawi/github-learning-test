@@ -1,11 +1,145 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-  <title>My GitHub Learning Page</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>IoT Dashboard - Demo</title>
+  <style>
+    body{
+      font-family: Arial, Helvetica, sans-serif;
+      background:#f6f8fb;
+      color:#222;
+      margin:0;
+      padding:30px;
+      display:flex;
+      gap:30px;
+      align-items:flex-start;
+      justify-content:center;
+    }
+    .card{
+      background:white;
+      border-radius:8px;
+      box-shadow:0 6px 18px rgba(20,30,50,.06);
+      padding:20px;
+      width:420px;
+    }
+    h1{margin:0 0 10px 0;font-size:20px}
+    .big-value{font-size:48px;color:#ff6b6b;margin:8px 0}
+    .meta{color:#666;font-size:14px}
+    canvas{width:100% !important; height:240px !important}
+    .controls{margin-top:12px;display:flex;gap:8px;align-items:center}
+    button{padding:8px 12px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer}
+    button.primary{background:#007acc;color:#fff;border-color:#007acc}
+  </style>
 </head>
 <body>
-  <h1>Hello Abobakr!</h1>
-  <p>This is my second version — testing update!.</p>
+
+  <div class="card">
+    <h1>Live Temperature</h1>
+    <div class="big-value" id="temp">-- °C</div>
+    <div class="meta">Last update: <span id="last">—</span></div>
+
+    <div class="controls">
+      <button id="startStop" class="primary">Stop</button>
+      <button id="clear">Clear</button>
+      <div style="margin-left:auto;color:#666;font-size:13px">Source: simulated</div>
+    </div>
+
+    <div style="margin-top:14px">
+      <canvas id="chart"></canvas>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    // إعداد الرسم البياني (Chart.js)
+    const ctx = document.getElementById('chart').getContext('2d');
+    const data = { labels: [], datasets: [{ label: 'Temperature °C', data: [], fill:false, tension:0.3 }] };
+    const chart = new Chart(ctx, { type:'line', data, options:{
+      scales:{ x:{display:true}, y:{beginAtZero:false} }, animation:false, plugins:{legend:{display:false}} }});
+
+    // عناصر DOM
+    const tempEl = document.getElementById('temp');
+    const lastEl = document.getElementById('last');
+    const startStopBtn = document.getElementById('startStop');
+    const clearBtn = document.getElementById('clear');
+
+    // حالة المحاكاة
+    let running = true;
+    let timer = null;
+
+    // دالة توليد قيمة محاكاة عشوائية (أو يمكنك وضع مصدر حقيقي لاحقًا)
+    function simulateTemperature(previous){
+      // يولد قيمة حول 20-30 مع تقلب بسيط
+      const base = previous ?? (20 + Math.random()*6);
+      const delta = (Math.random()-0.5) * 1.8; // تقلب
+      return Math.round((base + delta) * 10) / 10;
+    }
+
+    // إضافة نقطة للرسم مع تحديث الواجهة
+    function pushReading(value){
+      const now = new Date();
+      const label = now.toLocaleTimeString();
+      // نحافظ على آخر 30 نقطة فقط
+      if (data.labels.length >= 30){
+        data.labels.shift();
+        data.datasets[0].data.shift();
+      }
+      data.labels.push(label);
+      data.datasets[0].data.push(value);
+      chart.update();
+      tempEl.textContent = value + ' °C';
+      lastEl.textContent = now.toLocaleTimeString();
+    }
+
+    // حلقة التحديث (كل ثانية)
+    function startSimulator(){
+      let prev = null;
+      timer = setInterval(() => {
+        prev = simulateTemperature(prev);
+        pushReading(prev);
+      }, 1000);
+    }
+
+    function stopSimulator(){
+      clearInterval(timer);
+      timer = null;
+    }
+
+    // أزرار التحكم
+    startStopBtn.addEventListener('click', () => {
+      if (running) {
+        stopSimulator(); startStopBtn.textContent = 'Start'; startStopBtn.classList.remove('primary');
+      } else {
+        startSimulator(); startStopBtn.textContent = 'Stop'; startStopBtn.classList.add('primary');
+      }
+      running = !running;
+    });
+
+    clearBtn.addEventListener('click', () => {
+      data.labels = []; data.datasets[0].data = []; chart.update();
+      tempEl.textContent = '-- °C'; lastEl.textContent = '—';
+    });
+
+    // ابدأ المحاكاة مباشرة عند تحميل الصفحة
+    startSimulator();
+
+    // --- لاحقاً: لو تريد ربط بيانات حقيقية عبر MQTT over WebSocket ---
+    // استبدل أو أوقف المحاكاة، ثم استخدم مكتبة mqtt (مثال أدناه)
+    /*
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <script>
+      // مثال توصيل إلى broker يدعم websockets (wss)
+      const client = mqtt.connect('wss://test.mosquitto.org:8081'); // مثال عام، استبدل بالمخدم الخاص بك
+      client.on('connect', () => {
+        client.subscribe('yourtopic/temperature');
+      });
+      client.on('message', (topic, message) => {
+        const v = parseFloat(message.toString());
+        pushReading(v);
+      });
+    </script>
+    */
+  </script>
 </body>
 </html>
